@@ -12,17 +12,39 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-
 public class StudentService {
-    private StudentMapper studentMapper;
-    private StudentRepository studentRepository;
 
-    public List<StudentDTO> getAllStudents(){
-        return studentRepository.findAll().stream()
-                .map(studentMapper::toDTO)
+    private final StudentRepository repository;
+    private final StudentMapper mapper;
+
+    public List<StudentDTO> getAllStudents() {
+        return repository.findAll().stream()
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
-    public StudentDTO getStudentById(Long id){
-        return studentMapper.toDTO(studentRepository.getOne(id));
+
+    public StudentDTO getStudentById(Long id) {
+        Student student = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+        return mapper.toDTO(student);
+    }
+
+    public StudentDTO createStudent(StudentDTO dto) {
+        Student student = mapper.toEntity(dto);
+        return mapper.toDTO(repository.save(student));
+    }
+
+    public StudentDTO updateStudent(Long id, StudentDTO dto) {
+        Student existing = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+        existing.setFirstName(dto.getFirstName());
+        existing.setLastName(dto.getLastName());
+        existing.setEmail(dto.getEmail());
+        existing.setDepartment(dto.getDepartment());
+        return mapper.toDTO(repository.save(existing));
+    }
+
+    public void deleteStudent(Long id) {
+        repository.deleteById(id);
     }
 }
